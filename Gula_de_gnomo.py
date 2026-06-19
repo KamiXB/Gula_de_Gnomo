@@ -70,6 +70,11 @@ class PedidoHamburguer(EntidadePedido):
         self.aumentar_erros(1)
         return False
 
+    def calcular_recompensa_final(self, bonus_tempo):
+        if self.acertou:
+            return self.pontos_base + self.gorjeta + bonus_tempo
+        return 0
+
 
 class GulaDeGnomo(tk.Tk):
     def __init__(self):
@@ -84,24 +89,18 @@ class GulaDeGnomo(tk.Tk):
         self.max_erros = 5
         self.pedidos_entregues = 0
         self.rodada = 1
+        self.tempo_tick = 1000
         self.jogo_ativo = True
         self.pedido_atual = None
         self.montagem_atual = []
         self.clientes = ["Centauro", "Dragão", "Goblin", "Ogro", "Mago", "Slime"]
 
-        self.ingredientes = [
-            "Pão",
-            "Hambúrguer",
-            "Queijo",
-            "Alface",
-            "Tomate",
-            "Bacon"
-        ]
-
+        self.ingredientes = ["Pão", "Hambúrguer", "Queijo", "Alface", "Tomate", "Bacon"]
         self.botoes_ingredientes = []
 
         self.criar_interface()
         self.gerar_novo_pedido(self.rodada)
+        self.contar_tempo(1)
 
     def criar_interface(self):
         self.lbl_titulo = tk.Label(self, text="🏰🍄 Gula de Gnomo 🍄🏰", font=("Arial", 22, "bold"))
@@ -109,6 +108,9 @@ class GulaDeGnomo(tk.Tk):
 
         self.lbl_pedido = tk.Label(self, text="", font=("Arial", 14), justify="left")
         self.lbl_pedido.pack(pady=10)
+
+        self.lbl_timer = tk.Label(self, text="Tempo: 0", font=("Arial", 18, "bold"), fg="red")
+        self.lbl_timer.pack(pady=5)
 
         self.lbl_montagem = tk.Label(self, text="Seu lanche: vazio", font=("Arial", 12))
         self.lbl_montagem.pack(pady=10)
@@ -138,14 +140,10 @@ class GulaDeGnomo(tk.Tk):
             botao.destroy()
 
         self.botoes_ingredientes = []
-
         ingredientes_embaralhados = self.ingredientes.copy()
         random.shuffle(ingredientes_embaralhados)
 
         for indice, ingrediente in enumerate(ingredientes_embaralhados):
-            linha = indice // 3
-            coluna = indice % 3
-
             btn = tk.Button(
                 self.frame_ingredientes,
                 text=ingrediente,
@@ -154,8 +152,7 @@ class GulaDeGnomo(tk.Tk):
                 font=("Arial", 10, "bold"),
                 command=lambda i=ingrediente: self.adicionar_ao_lanche(i)
             )
-
-            btn.grid(row=linha, column=coluna, padx=5, pady=5)
+            btn.grid(row=indice // 3, column=indice % 3, padx=5, pady=5)
             self.botoes_ingredientes.append(btn)
 
     def gerar_novo_pedido(self, nivel):
@@ -169,10 +166,12 @@ class GulaDeGnomo(tk.Tk):
             "Veggie": ["Pão", "Alface", "Tomate", "Queijo"]
         }
 
+        tempo = max(10, 25 - nivel)
+
         self.pedido_atual = PedidoHamburguer(
             nome=nome_pedido,
             dificuldade=nivel,
-            tempo_limite=25,
+            tempo_limite=tempo,
             pontos_base=10 + nivel,
             ativo=True,
             cliente=random.choice(self.clientes),
@@ -201,16 +200,31 @@ class GulaDeGnomo(tk.Tk):
         acertou = self.pedido_atual.finalizar_pedido(self.montagem_atual)
 
         if acertou:
-            self.pontos += 10
+            bonus_tempo = self.pedido_atual.tempo_restante
+            pontos_ganhos = self.pedido_atual.calcular_recompensa_final(bonus_tempo)
+            self.pontos += pontos_ganhos
             self.pedidos_entregues += 1
             self.rodada += 1
-            self.lbl_status.config(text="✅ Pedido correto! +10 pontos.")
+            self.lbl_status.config(text=f"✅ Pedido correto! +{pontos_ganhos} pontos.")
         else:
             self.erros += 1
             self.lbl_status.config(text=f"❌ Pedido errado! Receita correta: {self.pedido_atual.receita}")
 
         self.gerar_novo_pedido(self.rodada)
         self.atualizar_placar()
+
+    def contar_tempo(self, valor):
+        if self.jogo_ativo and self.pedido_atual:
+            self.pedido_atual.reduzir_tempo(valor)
+            self.lbl_timer.config(text=f"Tempo: {self.pedido_atual.tempo_restante}s")
+
+            if self.pedido_atual.tempo_restante <= 0:
+                self.erros += 1
+                self.lbl_status.config(text="Tempo esgotado! Cliente foi embora.")
+                self.gerar_novo_pedido(self.rodada)
+
+            self.atualizar_placar()
+            self.after(self.tempo_tick, lambda: self.contar_tempo(1))
 
     def atualizar_tela_pedido(self, mensagem):
         receita_texto = " + ".join(self.pedido_atual.receita)
@@ -222,6 +236,7 @@ class GulaDeGnomo(tk.Tk):
                  f"Ingredientes pedidos: {receita_texto}"
         )
 
+        self.lbl_timer.config(text=f"Tempo: {self.pedido_atual.tempo_restante}s")
         self.atualizar_montagem()
         self.atualizar_placar()
 
