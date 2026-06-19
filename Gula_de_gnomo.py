@@ -53,6 +53,23 @@ class PedidoHamburguer(EntidadePedido):
         self.ingredientes_montados.append(ingrediente)
         self.adicionar_historico(f"Adicionou {ingrediente}")
 
+    def comparar_receita(self, ingredientes_jogador):
+        return ingredientes_jogador == self.receita
+
+    def finalizar_pedido(self, ingredientes_jogador):
+        self.tentativas += 1
+        self.finalizado = True
+
+        if self.comparar_receita(ingredientes_jogador):
+            self.acertou = True
+            self.mudar_status("Pedido correto")
+            return True
+
+        self.acertou = False
+        self.mudar_status("Pedido errado")
+        self.aumentar_erros(1)
+        return False
+
 
 class GulaDeGnomo(tk.Tk):
     def __init__(self):
@@ -87,32 +104,34 @@ class GulaDeGnomo(tk.Tk):
         self.gerar_novo_pedido(self.rodada)
 
     def criar_interface(self):
-        self.lbl_titulo = tk.Label(
-            self,
-            text="🏰🍄 Gula de Gnomo 🍄🏰",
-            font=("Arial", 22, "bold")
-        )
+        self.lbl_titulo = tk.Label(self, text="🏰🍄 Gula de Gnomo 🍄🏰", font=("Arial", 22, "bold"))
         self.lbl_titulo.pack(pady=10)
 
-        self.lbl_pedido = tk.Label(
-            self,
-            text="",
-            font=("Arial", 14),
-            justify="left"
-        )
+        self.lbl_pedido = tk.Label(self, text="", font=("Arial", 14), justify="left")
         self.lbl_pedido.pack(pady=10)
 
-        self.lbl_montagem = tk.Label(
-            self,
-            text="Seu lanche: vazio",
-            font=("Arial", 12)
-        )
+        self.lbl_montagem = tk.Label(self, text="Seu lanche: vazio", font=("Arial", 12))
         self.lbl_montagem.pack(pady=10)
 
         self.frame_ingredientes = tk.Frame(self)
         self.frame_ingredientes.pack(pady=10)
 
         self.criar_botoes_ingredientes()
+
+        self.btn_finalizar = tk.Button(
+            self,
+            text="Entregar Pedido",
+            font=("Arial", 12, "bold"),
+            bg="#90EE90",
+            command=lambda: self.entregar_pedido(True)
+        )
+        self.btn_finalizar.pack(pady=8)
+
+        self.lbl_status = tk.Label(self, text="", font=("Arial", 12, "italic"))
+        self.lbl_status.pack(pady=10)
+
+        self.lbl_placar = tk.Label(self, text="", font=("Arial", 12, "bold"))
+        self.lbl_placar.pack(pady=10)
 
     def criar_botoes_ingredientes(self):
         for botao in self.botoes_ingredientes:
@@ -140,13 +159,7 @@ class GulaDeGnomo(tk.Tk):
             self.botoes_ingredientes.append(btn)
 
     def gerar_novo_pedido(self, nivel):
-        nome_pedido = random.choice([
-            "X-Burger",
-            "X-Salada",
-            "Bacon Burger",
-            "Duplo Monstro",
-            "Veggie"
-        ])
+        nome_pedido = random.choice(["X-Burger", "X-Salada", "Bacon Burger", "Duplo Monstro", "Veggie"])
 
         receitas = {
             "X-Burger": ["Pão", "Hambúrguer", "Queijo"],
@@ -181,6 +194,24 @@ class GulaDeGnomo(tk.Tk):
         self.pedido_atual.adicionar_ingrediente(ingrediente)
         self.atualizar_montagem()
 
+    def entregar_pedido(self, manual):
+        if not self.jogo_ativo:
+            return
+
+        acertou = self.pedido_atual.finalizar_pedido(self.montagem_atual)
+
+        if acertou:
+            self.pontos += 10
+            self.pedidos_entregues += 1
+            self.rodada += 1
+            self.lbl_status.config(text="✅ Pedido correto! +10 pontos.")
+        else:
+            self.erros += 1
+            self.lbl_status.config(text=f"❌ Pedido errado! Receita correta: {self.pedido_atual.receita}")
+
+        self.gerar_novo_pedido(self.rodada)
+        self.atualizar_placar()
+
     def atualizar_tela_pedido(self, mensagem):
         receita_texto = " + ".join(self.pedido_atual.receita)
 
@@ -192,14 +223,17 @@ class GulaDeGnomo(tk.Tk):
         )
 
         self.atualizar_montagem()
+        self.atualizar_placar()
 
     def atualizar_montagem(self):
-        if self.montagem_atual:
-            texto = " + ".join(self.montagem_atual)
-        else:
-            texto = "vazio"
-
+        texto = " + ".join(self.montagem_atual) if self.montagem_atual else "vazio"
         self.lbl_montagem.config(text=f"Seu lanche: {texto}")
+
+    def atualizar_placar(self):
+        self.lbl_placar.config(
+            text=f"Pontos: {self.pontos} | Erros: {self.erros}/{self.max_erros} | "
+                 f"Pedidos corretos: {self.pedidos_entregues} | Rodada: {self.rodada}"
+        )
 
 
 jogo = GulaDeGnomo()
