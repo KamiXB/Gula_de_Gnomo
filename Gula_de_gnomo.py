@@ -121,8 +121,7 @@ class GulaDeGnomo(tk.Tk):
         self.botoes_ingredientes = []
 
         self.criar_interface(650)
-        self.gerar_novo_pedido(self.rodada)
-        self.contar_tempo(1)
+        self.after(100, self.iniciar_jogo)
 
     def mostrar_tutorial(self):
         tutorial = """
