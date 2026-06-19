@@ -1,4 +1,5 @@
 import tkinter as tk
+import random
 
 class EntidadePedido:
     def __init__(self, nome, dificuldade, tempo_limite, pontos_base, ativo):
@@ -47,13 +48,6 @@ class PedidoHamburguer(EntidadePedido):
         self.finalizado = False
         self.acertou = False
         self.combo = 0
-        self.receitas = {
-            "X-Burger": ["Pão", "Hambúrguer", "Queijo"],
-            "X-Salada": ["Pão", "Hambúrguer", "Queijo", "Alface", "Tomate"],
-            "Bacon Burger": ["Pão", "Hambúrguer", "Queijo", "Bacon"],
-            "Duplo Monstro": ["Pão", "Hambúrguer", "Hambúrguer", "Queijo", "Bacon"],
-            "Veggie": ["Pão", "Alface", "Tomate", "Queijo"]
-        }
 
     def adicionar_ingrediente(self, ingrediente):
         self.ingredientes_montados.append(ingrediente)
@@ -68,19 +62,51 @@ class GulaDeGnomo(tk.Tk):
         self.geometry("800x700")
         self.resizable(False, False)
 
+        self.pontos = 0
+        self.erros = 0
+        self.max_erros = 5
+        self.pedidos_entregues = 0
+        self.rodada = 1
+
+        self.criar_interface()
+
+    def criar_interface(self):
         self.lbl_titulo = tk.Label(
             self,
             text="🏰🍄 Gula de Gnomo 🍄🏰",
             font=("Arial", 22, "bold")
         )
-        self.lbl_titulo.pack(pady=20)
+        self.lbl_titulo.pack(pady=10)
 
-        self.lbl_texto = tk.Label(
+        self.lbl_pedido = tk.Label(
             self,
-            text="PedidoHamburguer e receitas adicionados.",
-            font=("Arial", 14)
+            text="Pedido aparecerá aqui.",
+            font=("Arial", 14),
+            justify="left"
         )
-        self.lbl_texto.pack(pady=20)
+        self.lbl_pedido.pack(pady=10)
+
+        self.lbl_timer = tk.Label(
+            self,
+            text="Tempo: 0",
+            font=("Arial", 18, "bold"),
+            fg="red"
+        )
+        self.lbl_timer.pack(pady=5)
+
+        self.lbl_montagem = tk.Label(
+            self,
+            text="Seu lanche: vazio",
+            font=("Arial", 12)
+        )
+        self.lbl_montagem.pack(pady=10)
+
+        self.lbl_placar = tk.Label(
+            self,
+            text=f"Pontos: {self.pontos} | Erros: {self.erros}/{self.max_erros}",
+            font=("Arial", 12, "bold")
+        )
+        self.lbl_placar.pack(pady=10)
 
 
 jogo = GulaDeGnomo()
