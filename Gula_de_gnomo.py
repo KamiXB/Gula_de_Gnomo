@@ -67,6 +67,19 @@ class GulaDeGnomo(tk.Tk):
         self.max_erros = 5
         self.pedidos_entregues = 0
         self.rodada = 1
+        self.jogo_ativo = True
+        self.montagem_atual = []
+
+        self.ingredientes = [
+            "Pão",
+            "Hambúrguer",
+            "Queijo",
+            "Alface",
+            "Tomate",
+            "Bacon"
+        ]
+
+        self.botoes_ingredientes = []
 
         self.criar_interface()
 
@@ -86,14 +99,6 @@ class GulaDeGnomo(tk.Tk):
         )
         self.lbl_pedido.pack(pady=10)
 
-        self.lbl_timer = tk.Label(
-            self,
-            text="Tempo: 0",
-            font=("Arial", 18, "bold"),
-            fg="red"
-        )
-        self.lbl_timer.pack(pady=5)
-
         self.lbl_montagem = tk.Label(
             self,
             text="Seu lanche: vazio",
@@ -101,12 +106,45 @@ class GulaDeGnomo(tk.Tk):
         )
         self.lbl_montagem.pack(pady=10)
 
-        self.lbl_placar = tk.Label(
-            self,
-            text=f"Pontos: {self.pontos} | Erros: {self.erros}/{self.max_erros}",
-            font=("Arial", 12, "bold")
-        )
-        self.lbl_placar.pack(pady=10)
+        self.frame_ingredientes = tk.Frame(self)
+        self.frame_ingredientes.pack(pady=10)
+
+        self.criar_botoes_ingredientes()
+
+    def criar_botoes_ingredientes(self):
+        ingredientes_embaralhados = self.ingredientes.copy()
+        random.shuffle(ingredientes_embaralhados)
+
+        for indice, ingrediente in enumerate(ingredientes_embaralhados):
+            linha = indice // 3
+            coluna = indice % 3
+
+            btn = tk.Button(
+                self.frame_ingredientes,
+                text=ingrediente,
+                width=18,
+                height=2,
+                font=("Arial", 10, "bold"),
+                command=lambda i=ingrediente: self.adicionar_ao_lanche(i)
+            )
+
+            btn.grid(row=linha, column=coluna, padx=5, pady=5)
+            self.botoes_ingredientes.append(btn)
+
+    def adicionar_ao_lanche(self, ingrediente):
+        if not self.jogo_ativo:
+            return
+
+        self.montagem_atual.append(ingrediente)
+        self.atualizar_montagem()
+
+    def atualizar_montagem(self):
+        if self.montagem_atual:
+            texto = " + ".join(self.montagem_atual)
+        else:
+            texto = "vazio"
+
+        self.lbl_montagem.config(text=f"Seu lanche: {texto}")
 
 
 jogo = GulaDeGnomo()
