@@ -32,6 +32,34 @@ class EntidadePedido:
         return self.pontos_base * multiplicador
 
 
+class PedidoHamburguer(EntidadePedido):
+    def __init__(self, nome, dificuldade, tempo_limite, pontos_base, ativo,
+                 cliente, receita, ingredientes_disponiveis, cor_pedido, gorjeta):
+        super().__init__(nome, dificuldade, tempo_limite, pontos_base, ativo)
+
+        self.cliente = cliente
+        self.receita = receita
+        self.ingredientes_disponiveis = ingredientes_disponiveis
+        self.cor_pedido = cor_pedido
+        self.gorjeta = gorjeta
+
+        self.ingredientes_montados = []
+        self.finalizado = False
+        self.acertou = False
+        self.combo = 0
+        self.receitas = {
+            "X-Burger": ["Pão", "Hambúrguer", "Queijo"],
+            "X-Salada": ["Pão", "Hambúrguer", "Queijo", "Alface", "Tomate"],
+            "Bacon Burger": ["Pão", "Hambúrguer", "Queijo", "Bacon"],
+            "Duplo Monstro": ["Pão", "Hambúrguer", "Hambúrguer", "Queijo", "Bacon"],
+            "Veggie": ["Pão", "Alface", "Tomate", "Queijo"]
+        }
+
+    def adicionar_ingrediente(self, ingrediente):
+        self.ingredientes_montados.append(ingrediente)
+        self.adicionar_historico(f"Adicionou {ingrediente}")
+
+
 class GulaDeGnomo(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -49,7 +77,7 @@ class GulaDeGnomo(tk.Tk):
 
         self.lbl_texto = tk.Label(
             self,
-            text="Classe base EntidadePedido criada.",
+            text="PedidoHamburguer e receitas adicionados.",
             font=("Arial", 14)
         )
         self.lbl_texto.pack(pady=20)
