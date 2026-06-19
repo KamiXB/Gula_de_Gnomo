@@ -68,7 +68,9 @@ class GulaDeGnomo(tk.Tk):
         self.pedidos_entregues = 0
         self.rodada = 1
         self.jogo_ativo = True
+        self.pedido_atual = None
         self.montagem_atual = []
+        self.clientes = ["Centauro", "Dragão", "Goblin", "Ogro", "Mago", "Slime"]
 
         self.ingredientes = [
             "Pão",
@@ -82,6 +84,7 @@ class GulaDeGnomo(tk.Tk):
         self.botoes_ingredientes = []
 
         self.criar_interface()
+        self.gerar_novo_pedido(self.rodada)
 
     def criar_interface(self):
         self.lbl_titulo = tk.Label(
@@ -93,7 +96,7 @@ class GulaDeGnomo(tk.Tk):
 
         self.lbl_pedido = tk.Label(
             self,
-            text="Pedido aparecerá aqui.",
+            text="",
             font=("Arial", 14),
             justify="left"
         )
@@ -112,6 +115,11 @@ class GulaDeGnomo(tk.Tk):
         self.criar_botoes_ingredientes()
 
     def criar_botoes_ingredientes(self):
+        for botao in self.botoes_ingredientes:
+            botao.destroy()
+
+        self.botoes_ingredientes = []
+
         ingredientes_embaralhados = self.ingredientes.copy()
         random.shuffle(ingredientes_embaralhados)
 
@@ -131,11 +139,58 @@ class GulaDeGnomo(tk.Tk):
             btn.grid(row=linha, column=coluna, padx=5, pady=5)
             self.botoes_ingredientes.append(btn)
 
+    def gerar_novo_pedido(self, nivel):
+        nome_pedido = random.choice([
+            "X-Burger",
+            "X-Salada",
+            "Bacon Burger",
+            "Duplo Monstro",
+            "Veggie"
+        ])
+
+        receitas = {
+            "X-Burger": ["Pão", "Hambúrguer", "Queijo"],
+            "X-Salada": ["Pão", "Hambúrguer", "Queijo", "Alface", "Tomate"],
+            "Bacon Burger": ["Pão", "Hambúrguer", "Queijo", "Bacon"],
+            "Duplo Monstro": ["Pão", "Hambúrguer", "Hambúrguer", "Queijo", "Bacon"],
+            "Veggie": ["Pão", "Alface", "Tomate", "Queijo"]
+        }
+
+        self.pedido_atual = PedidoHamburguer(
+            nome=nome_pedido,
+            dificuldade=nivel,
+            tempo_limite=25,
+            pontos_base=10 + nivel,
+            ativo=True,
+            cliente=random.choice(self.clientes),
+            receita=receitas[nome_pedido],
+            ingredientes_disponiveis=self.ingredientes,
+            cor_pedido="#FFD966",
+            gorjeta=random.randint(3, 10)
+        )
+
+        self.montagem_atual = []
+        self.criar_botoes_ingredientes()
+        self.atualizar_tela_pedido("Novo pedido recebido!")
+
     def adicionar_ao_lanche(self, ingrediente):
         if not self.jogo_ativo:
             return
 
         self.montagem_atual.append(ingrediente)
+        self.pedido_atual.adicionar_ingrediente(ingrediente)
+        self.atualizar_montagem()
+
+    def atualizar_tela_pedido(self, mensagem):
+        receita_texto = " + ".join(self.pedido_atual.receita)
+
+        self.lbl_pedido.config(
+            text=f"{mensagem}\n"
+                 f"Cliente: {self.pedido_atual.cliente}\n"
+                 f"Pedido: {self.pedido_atual.nome}\n"
+                 f"Ingredientes pedidos: {receita_texto}"
+        )
+
         self.atualizar_montagem()
 
     def atualizar_montagem(self):
